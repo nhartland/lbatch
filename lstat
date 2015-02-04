@@ -1,0 +1,6 @@
+#!/bin/bash
+FILES=~/.lbatch/*.que
+for f in $FILES
+do
+  cat $f
+done

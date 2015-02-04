@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# Utility Functions
+lbatch_lock()
+{
+	TARGETFILE=~/.lbatch/lock
+
+	while true; do	
+		if ( set -o noclobber; echo "locked" > "$TARGETFILE") 2> /dev/null; then
+		  trap 'rm -f "$TARGETFILE"; exit $?' INT TERM EXIT
+		  break
+		fi
+
+		sleep 10s
+	done
+}
+
+lbatch_lock_release()
+{
+	TARGETFILE=~/.lbatch/lock
+	rm -f "$TARGETFILE"
+}
+
+echo_status()
+{
+	echo $BASENAME: $NC"c, "$NR"r, "$NQ"q. Submitted: "$RUNDATE", Updated "$(date)". PID="$$
+}
+
+# Script information
+SCRIPT=$1
+BASENAME=$(basename "$SCRIPT")
+FILENAME="${BASENAME%.*}"
+
+# Number of jobs to be launched and number of slots
+NJOBS=$2
+NSLOTS=$3
+
+# If number of jobs are smaller than slots
+if [ $NSLOTS -gt $NJOBS ]; then 
+	NSLOTS=$NJOBS 
+fi
+
+if ! test -e "~/.lbatch"; then
+	mkdir ~/.lbatch &> /dev/null
+fi
+
+# Setup identifying run parameters
+RUNID=$(date +%s)_$$
+RUNDATE=$(date)
+RUNFILE=LBATCH_$RUNID.que
+
+#Setup queue variables
+# NC: Number of completed jobs
+# NR: Number of running jobs
+# NQ: Number of queued jobs
+NC=0; NR=0; NQ=$NJOBS;
+
+# Initialise runfile
+echo_status > ~/.lbatch/$RUNFILE
+
+# Obtain lock
+until lbatch_lock; do sleep 10s; done
+
+# Setup SLOT variable
+# This is a $NSLOTS long list of running PIDs
+for (( i=1; i<=$NSLOTS; i++ ))
+do
+	SLOTID[$i]=0
+done
+
+# While all jobs are not completed
+while [ $NC -lt $NJOBS ]
+do
+	# Check for terminated processes
+	for (( IS=1; IS<=$NSLOTS; IS++ ))
+	do
+		if  [ ${SLOTID[$IS]} -ne 0 ] && ! kill -s 0 ${SLOTID[$IS]};	# Is it no longer alive?
+		then
+			# Free slot
+			SLOTID[$IS]=0
+			((NC++))
+			((NR--))
+
+			# Update status
+			echo_status > ~/.lbatch/$RUNFILE
+		fi
+	done
+
+	# If there are queuing jobs
+	if [ $NQ -gt 0 ]
+	then
+		for (( IS=1; IS<=$NSLOTS; IS++ ))
+		do
+			if  [ ${SLOTID[$IS]} -eq 0 ] # is slot free?
+			then
+				IJ=$(($NC+$NR)) # current job in the queue
+
+				# Launch the job
+				nohup bash $SCRIPT $IJ &> $FILENAME"_"$IJ".lsub" &	
+				SLOTID[$IS]=$!
+
+				# Increment counters
+	            ((NQ--))
+				((NR++))
+
+				# Update status
+				echo_status > ~/.lbatch/$RUNFILE
+				break # avoid submitting more jobs than needed
+			fi
+		done
+	fi
+
+	# Wait a little while
+	sleep 1
+done
+
+# Final log
+echo $BASENAME: $CJOB"c, 0r, 0q. Submitted: "$RUNDATE", Completed "$(date)". PID="$$   > ./$RUNFILE
+rm ~/.lbatch/$RUNFILE
+
+# Cleanup and Release lock
+lbatch_lock_release

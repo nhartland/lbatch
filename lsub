@@ -17,7 +17,7 @@ NJOBS=0
 if [[ $(uname) -eq 'Darwin' ]] ; then
   NSLOTS=$(sysctl -n hw.logicalcpu_max)
 else
-  NSLOTS=lscpu -p | awk '{if ($1!="#") print;}' | wc -l
+  NSLOTS=$(lscpu -p | awk '{if ($1!="#") print;}' | wc -l )
 fi
 
 if [[ $# -eq 0 ]] ; then

@@ -9,6 +9,7 @@ print_help()
   echo "  -h,     show help"
   echo "  -n,     maximum number of job slots [default "$1"]"
   echo "  -t,     number of jobs to be scheduled [default 0]"
+  echo "  -j,     batch file for submitting jobs"
 }
 
 # Variable init
@@ -42,14 +43,18 @@ while test $NARGS -gt 0; do
                         NJOBS=$1
                         shift
                         ;;
+                -j)
+                        shift
+                        SCRIPTFILE=$1
+                        shift
+                        ;;
                 *)
                         break
                         ;;
         esac
 done
 
-echo $NJOBS " jobs requested"
-SCRIPTFILE="test.sh"
+echo $NJOBS " jobs requested for job script " $SCRIPTFILE
 
 if [ $NJOBS == 0 ]; then
   echo "lbatch error: zero jobs requested";

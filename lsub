@@ -15,7 +15,7 @@ print_help()
 # Variable init
 NJOBS=0
 
-if [[ $(uname) -eq 'Darwin' ]] ; then
+if [[ "$(uname)" = "Darwin" ]] ; then
   NSLOTS=$(sysctl -n hw.logicalcpu_max)
 else
   NSLOTS=$(lscpu -p | awk '{if ($1!="#") print;}' | wc -l )

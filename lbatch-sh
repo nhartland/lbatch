@@ -23,7 +23,7 @@ lbatch_lock_release()
 
 echo_status()
 {
-	echo $BASENAME: $NC"c, "$NR"r, "$NQ"q. Submitted: "$RUNDATE", Updated "$(date)". PID="$$
+	echo "$BASENAME: ${NC}c, ${NR}r, ${NQ}q. Submitted: $RUNDATE, Updated $(date). PID=$$"
 }
 
 # Script information
@@ -36,11 +36,11 @@ NJOBS=$2
 NSLOTS=$3
 
 # If number of jobs are smaller than slots
-if [ $NSLOTS -gt $NJOBS ]; then 
+if [ "$NSLOTS" -gt "$NJOBS" ]; then 
 	NSLOTS=$NJOBS 
 fi
 
-if ! test -e "~/.lbatch"; then
+if ! test -e "$HOME/.lbatch"; then
 	mkdir ~/.lbatch &> /dev/null
 fi
 
@@ -56,23 +56,23 @@ RUNFILE=LBATCH_$RUNID.que
 NC=0; NR=0; NQ=$NJOBS;
 
 # Initialise runfile
-echo_status > ~/.lbatch/$RUNFILE
+echo_status > ~/.lbatch/"$RUNFILE"
 
 # Obtain lock
 until lbatch_lock; do sleep 10s; done
 
 # Setup SLOT variable
 # This is a $NSLOTS long list of running PIDs
-for (( i=1; i<=$NSLOTS; i++ ))
+for (( i=1; i<=NSLOTS; i++ ))
 do
 	SLOTID[$i]=0
 done
 
 # While all jobs are not completed
-while [ $NC -lt $NJOBS ]
+while [ $NC -lt "$NJOBS" ]
 do
 	# Check for terminated processes
-	for (( IS=1; IS<=$NSLOTS; IS++ ))
+	for (( IS=1; IS<=NSLOTS; IS++ ))
 	do
 		if  [ ${SLOTID[$IS]} -ne 0 ] && ! kill -s 0 ${SLOTID[$IS]};	# Is it no longer alive?
 		then
@@ -82,21 +82,21 @@ do
 			((NR--))
 
 			# Update status
-			echo_status > ~/.lbatch/$RUNFILE
+			echo_status > ~/.lbatch/"$RUNFILE"
 		fi
 	done
 
 	# If there are queuing jobs
-	if [ $NQ -gt 0 ]
+	if [ "$NQ" -gt 0 ]
 	then
-		for (( IS=1; IS<=$NSLOTS; IS++ ))
+		for (( IS=1; IS<=NSLOTS; IS++ ))
 		do
 			if  [ ${SLOTID[$IS]} -eq 0 ] # is slot free?
 			then
-				IJ=$(($NC+$NR)) # current job in the queue
+				IJ=$((NC+NR)) # current job in the queue
 
 				# Launch the job
-				nohup bash $SCRIPT $IJ &> $FILENAME"_"$IJ".lsub" &	
+				nohup bash "$SCRIPT" "$IJ" &> "$FILENAME"_"$IJ".lsub &	
 				SLOTID[$IS]=$!
 
 				# Increment counters
@@ -104,7 +104,7 @@ do
 				((NR++))
 
 				# Update status
-				echo_status > ~/.lbatch/$RUNFILE
+				echo_status > ~/.lbatch/"$RUNFILE"
 				break # avoid submitting more jobs than needed
 			fi
 		done
@@ -115,8 +115,8 @@ do
 done
 
 # Final log
-echo $BASENAME: $CJOB"c, 0r, 0q. Submitted: "$RUNDATE", Completed "$(date)". PID="$$   > ./$RUNFILE
-rm ~/.lbatch/$RUNFILE
+echo "$BASENAME: ${NC}c, 0r, 0q. Submitted: $RUNDATE, Completed $(date). PID=$$"   > ./"$RUNFILE"
+rm ~/.lbatch/"$RUNFILE"
 
 # Cleanup and Release lock
 lbatch_lock_release

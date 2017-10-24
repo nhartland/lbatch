@@ -7,7 +7,7 @@ print_help()
   echo " "
   echo "options:"
   echo "  -h,     show help"
-  echo "  -n,     maximum number of job slots [default "$1"]"
+  echo "  -n,     maximum number of job slots [default $1]"
   echo "  -t,     number of jobs to be scheduled [default 0]"
   echo "  -j,     batch file for submitting jobs"
 }
@@ -22,7 +22,7 @@ else
 fi
 
 if [[ $# -eq 0 ]] ; then
-    print_help $NSLOTS
+    print_help "$NSLOTS"
     exit 0
 fi
 
@@ -30,7 +30,7 @@ NARGS=3
 while test $NARGS -gt 0; do
         case "$1" in
                 -h|--help)
-                        print_help $NSLOTS
+                        print_help "$NSLOTS"
                         exit 0
                         ;;
                 -n)
@@ -54,17 +54,17 @@ while test $NARGS -gt 0; do
         esac
 done
 
-echo $NJOBS " jobs requested for job script " $SCRIPTFILE
+echo "$NJOBS jobs requested for job script $SCRIPTFILE"
 
-if [ $NJOBS == 0 ]; then
+if [ "$NJOBS" == 0 ]; then
   echo "lbatch error: zero jobs requested";
   exit 1;
 fi
 
-if [ ! -f $SCRIPTFILE ]; then
+if [ ! -f "$SCRIPTFILE" ]; then
     echo "lbatch error: batch script $SCRIPTFILE cannot be found";
     exit 1;
 fi
 
-nohup lbatch-sh $SCRIPTFILE $NJOBS $NSLOTS &> /dev/null &
-echo "lbatch: job " $SCRIPTFILE " submitted" 
+nohup lbatch-sh "$SCRIPTFILE" "$NJOBS" "$NSLOTS" &> /dev/null &
+echo "lbatch: job $SCRIPTFILE submitted" 

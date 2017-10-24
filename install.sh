@@ -24,7 +24,7 @@ while test $NARGS -gt 0; do
                         shift
                         ;;
                 --prefix*)
-                        INSTALL_PREFIX=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        INSTALL_PREFIX=$(echo "$1" | sed -e 's/^[^=]*=//g')
                         shift
                         ;;
                 *)
@@ -35,14 +35,14 @@ done
 
 
 echo "***** Installing lbatch *****"
-echo "Installing to "$INSTALL_PREFIX
+echo "Installing to $INSTALL_PREFIX"
 INSTALL_DIR=$INSTALL_PREFIX"/bin/"
-if [ -d $INSTALL_DIR ]
+if [ -d "$INSTALL_DIR" ]
 then
-    cp lbatch-sh $INSTALL_DIR # Core script
+    cp lbatch-sh "$INSTALL_DIR" # Core script
 
-    cp lstat $INSTALL_DIR # Status script
-    cp lsub $INSTALL_DIR # Submission script
+    cp lstat "$INSTALL_DIR" # Status script
+    cp lsub "$INSTALL_DIR" # Submission script
 else
-    echo "Error: Directory "$INSTALL_DIR" does not exist."
+    echo "Error: Directory $INSTALL_DIR does not exist."
 fi
